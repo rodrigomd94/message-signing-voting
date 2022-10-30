@@ -13,4 +13,11 @@ const initLucid = async (wallet: string) => {
     return lucid;
 }
 
+export const initLucidWithoutWallet = async () => {
+    const lucid = await Lucid.new(
+        new Blockfrost("https://cardano-testnet.blockfrost.io/api/v0", process.env.NEXT_PUBLIC_BLOCKFROST!),
+        "Testnet",
+    );
+    return lucid
+}
 export default initLucid;

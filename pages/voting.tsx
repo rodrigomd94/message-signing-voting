@@ -6,15 +6,13 @@ import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { checkVote, countNfts, createVote, getAssets, VotingData } from "../utils/cardano";
 import initLucid from '../utils/lucid'
-import { Lucid, TxHash, Lovelace, Constr, SpendingValidator, Data } from 'lucid-cardano'
+import { Lucid, TxHash, Lovelace, Constr, SpendingValidator, Data, utf8ToHex } from 'lucid-cardano'
+import { PollData } from '../prisma/poll'
 
 
 const Voting: NextPage = () => {
   const walletStore = useStoreState((state: any) => state.wallet)
-  const [nftList, setNftList] = useState([])
   const [lucid, setLucid] = useState<Lucid>()
-  const [script, setScript] = useState<SpendingValidator>()
-  const [scriptAddress, setScriptAddress] = useState("")
   const [votingData, setVotingData] = useState<VotingData>()
 
 
@@ -48,6 +46,36 @@ const Voting: NextPage = () => {
     console.log(messageData)
   }
 
+  const createPoll = async () => {
+    const pollData: PollData = {
+      title: "Test poll",
+      description:"Test description",
+      options:["option 1", "option 2", "option 3"],
+      endingAt: new Date(Date.now()+5000000)
+    }
+    console.log(pollData)
+    console.log(JSON.stringify(pollData))
+    const message = JSON.stringify(pollData)
+    const payload = utf8ToHex(message);
+    const signedMessage = await lucid!.newMessage(walletStore.address, payload).sign()
+    const response = await fetch("api/createPoll", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+      "address": walletStore.address,
+      "pollData": pollData,
+      "signedMessage": signedMessage
+      }),
+    });
+
+    response.json().then(data => {
+      console.log(data);
+    });
+    console.log(message)
+  }
+
 
   return (
     <div className="px-10">
@@ -68,7 +96,7 @@ const Voting: NextPage = () => {
 
       </div>
       <div className="mx-40 my-10">
-        <button className="btn btn-primary m-5" onClick={() => { vote() }} >Deposit</button>
+        <button className="btn btn-primary m-5" onClick={() => { createPoll() }} >Deposit</button>
       </div>
     </div>
   )
